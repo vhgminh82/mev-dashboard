@@ -591,6 +591,7 @@ async function evalMpVictim(tx){
     if(F<1e-12)return;
     const gr=sandwich(F,Vin,rIn,rOut)[0];
     const grossU=gr*pA_USDT, net=grossU-gasU;
+    if(net<0)return; // ẩn ước tính âm
     const dir=(t0===baseL)?('Mua '+sym(tokL)):('Bán '+sym(tokL));
     mpVics.unshift({hash:tx.hash,pair:sym(t0)+'→'+sym(t1),dir,Vusdt:Vusdt,net:net});
     if(mpVics.length>15)mpVics.pop();
