@@ -510,7 +510,7 @@ loadEndpoints();
 
 /* Mempool live: newPendingTransactions -> thấy victim trước khi vào block */
 let mpWs=null,mpOn=false,mpSeen=new Map(),mpCount=0,mpT0=0;
-document.getElementById('mp_btn').onclick=()=>{
+function mpStart(){
   const mi=document.getElementById('mp_info');
   if(mpOn){try{mpWs.close();}catch(e){}return;}
   mi.textContent='Đang kết nối '+WS_URL+' ...';
@@ -544,7 +544,9 @@ document.getElementById('mp_btn').onclick=()=>{
   mpWs.onerror=()=>{mi.textContent='Lỗi WebSocket — endpoint có thể không hỗ trợ. Thử endpoint khác.';};
   mpWs.onclose=()=>{mpOn=false;document.getElementById('mp_btn').textContent='Bật mempool live';
     if(!/Lỗi/.test(mi.textContent))mi.textContent='Đã ngắt mempool.';};
-};
+}
+document.getElementById('mp_btn').onclick=mpStart;
+window.addEventListener('load',()=>setTimeout(()=>{if(!mpOn)mpStart();},1500));
 /* victim mempool: decode pending tx ngay, đánh giá với reserves mới nhất */
 const mpVics=[];
 async function evalMpVictim(tx){
