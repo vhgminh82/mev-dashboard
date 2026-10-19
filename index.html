@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MEV Sandwich Paper-Trade — LIVE BSC</title>
+<script>
+/* noble secp256k1+keccak: derive địa chỉ từ private key, offline */
+(()=>{var Yt=Object.create;var gt=Object.defineProperty;var jt=Object.getOwnPropertyDescriptor;var Gt=Object.getOwnPropertyNames;var Jt=Object.getPrototypeOf,Qt=Object.prototype.hasOwnProperty;var te=(t,e)=>()=>{try{return e||t((e={exports:{}}).exports,e),e.exports}catch(n){throw e=0,n}};var ee=(t,e,n,r)=>{if(e&&typeof e=="object"||typeof e=="function")for(let o of Gt(e))!Qt.call(t,o)&&o!==n&&gt(t,o,{get:()=>e[o],enumerable:!(r=jt(e,o))||r.enumerable});return t};var ne=(t,e,n)=>(n=t!=null?Yt(Jt(t)):{},ee(e||!t||!t.__esModule?gt(n,"default",{value:t,enumerable:!0}):n,t));var xt=te(()=>{});var re=ne(xt(),1);var d=BigInt(0),w=BigInt(1),v=BigInt(2),$=BigInt(3),mt=BigInt(8),x=Object.freeze({a:d,b:BigInt(7),P:BigInt("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f"),n:BigInt("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"),h:w,Gx:BigInt("55066263022277343669578718895168534326250603453777594175500187360389116729240"),Gy:BigInt("32670510020758816978083085130507043184471273380659243275938904335757337482424"),beta:BigInt("0x7ae96a2b657c07106e64479eac3434e99cf0497512f58995c1396c28719501ee")}),bt=(t,e)=>(t+e/v)/e,W={beta:BigInt("0x7ae96a2b657c07106e64479eac3434e99cf0497512f58995c1396c28719501ee"),splitScalar(t){let{n:e}=x,n=BigInt("0x3086d221a7d46bcde86c90e49284eb15"),r=-w*BigInt("0xe4437ed6010e88286f547fa90abfe4c3"),o=BigInt("0x114ca50f7a8e2f3f657c1108d9d44cfd8"),s=n,i=BigInt("0x100000000000000000000000000000000"),c=bt(s*t,e),u=bt(-r*t,e),a=f(t-c*n-u*o,e),h=f(-c*r-u*s,e),y=a>i,l=h>i;if(y&&(a=e-a),l&&(h=e-h),a>i||h>i)throw new Error("splitScalarEndo: Endomorphism failed, k="+t);return{k1neg:y,k1:a,k2neg:l,k2:h}}},O=32,X=32;var Et=O+1,St=2*O+1;function At(t){let{a:e,b:n}=x,r=f(t*t),o=f(r*t);return f(o+e*t+n)}var q=x.a===d,ct=class extends Error{constructor(e){super(e)}};function Bt(t){if(!(t instanceof b))throw new TypeError("JacobianPoint expected")}var b=class t{constructor(e,n,r){this.x=e,this.y=n,this.z=r}static fromAffine(e){if(!(e instanceof m))throw new TypeError("JacobianPoint#fromAffine: expected Point");return e.equals(m.ZERO)?t.ZERO:new t(e.x,e.y,w)}static toAffineBatch(e){let n=fe(e.map(r=>r.z));return e.map((r,o)=>r.toAffine(n[o]))}static normalizeZ(e){return t.toAffineBatch(e).map(t.fromAffine)}equals(e){Bt(e);let{x:n,y:r,z:o}=this,{x:s,y:i,z:c}=e,u=f(o*o),a=f(c*c),h=f(n*a),y=f(s*u),l=f(f(r*c)*a),p=f(f(i*o)*u);return h===y&&l===p}negate(){return new t(this.x,f(-this.y),this.z)}double(){let{x:e,y:n,z:r}=this,o=f(e*e),s=f(n*n),i=f(s*s),c=e+s,u=f(v*(f(c*c)-o-i)),a=f($*o),h=f(a*a),y=f(h-v*u),l=f(a*(u-y)-mt*i),p=f(v*n*r);return new t(y,l,p)}add(e){Bt(e);let{x:n,y:r,z:o}=this,{x:s,y:i,z:c}=e;if(s===d||i===d)return this;if(n===d||r===d)return e;let u=f(o*o),a=f(c*c),h=f(n*a),y=f(s*u),l=f(f(r*c)*a),p=f(f(i*o)*u),g=f(y-h),A=f(p-l);if(g===d)return A===d?this.double():t.ZERO;let U=f(g*g),R=f(g*U),L=f(h*U),K=f(A*A-R-v*L),ot=f(A*(L-K)-l*R),N=f(o*c*g);return new t(K,ot,N)}subtract(e){return this.add(e.negate())}multiplyUnsafe(e){let n=t.ZERO;if(typeof e=="bigint"&&e===d)return n;let r=kt(e);if(r===w)return this;if(!q){let y=n,l=this;for(;r>d;)r&w&&(y=y.add(l)),l=l.double(),r>>=w;return y}let{k1neg:o,k1:s,k2neg:i,k2:c}=W.splitScalar(r),u=n,a=n,h=this;for(;s>d||c>d;)s&w&&(u=u.add(h)),c&w&&(a=a.add(h)),h=h.double(),s>>=w,c>>=w;return o&&(u=u.negate()),i&&(a=a.negate()),a=new t(f(a.x*W.beta),a.y,a.z),u.add(a)}precomputeWindow(e){let n=q?128/e+1:256/e+1,r=[],o=this,s=o;for(let i=0;i<n;i++){s=o,r.push(s);for(let c=1;c<2**(e-1);c++)s=s.add(o),r.push(s);o=s.double()}return r}wNAF(e,n){!n&&this.equals(t.BASE)&&(n=m.BASE);let r=n&&n._WINDOW_SIZE||1;if(256%r)throw new Error("Point#wNAF: Invalid precomputation window, must be power of 2");let o=n&&ft.get(n);o||(o=this.precomputeWindow(r),n&&r!==1&&(o=t.normalizeZ(o),ft.set(n,o)));let s=t.ZERO,i=t.BASE,c=1+(q?128/r:256/r),u=2**(r-1),a=BigInt(2**r-1),h=2**r,y=BigInt(r);for(let l=0;l<c;l++){let p=l*u,g=Number(e&a);e>>=y,g>u&&(g-=h,e+=w);let A=p,U=p+Math.abs(g)-1,R=l%2!==0,L=g<0;g===0?i=i.add(M(R,o[A])):s=s.add(M(L,o[U]))}return{p:s,f:i}}multiply(e,n){let r=kt(e),o,s;if(q){let{k1neg:i,k1:c,k2neg:u,k2:a}=W.splitScalar(r),{p:h,f:y}=this.wNAF(c,n),{p:l,f:p}=this.wNAF(a,n);h=M(i,h),l=M(u,l),l=new t(f(l.x*W.beta),l.y,l.z),o=h.add(l),s=y.add(p)}else{let{p:i,f:c}=this.wNAF(r,n);o=i,s=c}return t.normalizeZ([o,s])[0]}toAffine(e){let{x:n,y:r,z:o}=this,s=this.equals(t.ZERO);e==null&&(e=s?mt:J(o));let i=e,c=f(i*i),u=f(c*i),a=f(n*c),h=f(r*u),y=f(o*i);if(s)return m.ZERO;if(y!==w)throw new Error("invZ was invalid");return new m(a,h)}};b.BASE=new b(x.Gx,x.Gy,w);b.ZERO=new b(d,w,d);function M(t,e){let n=e.negate();return t?n:e}var ft=new WeakMap,m=class t{constructor(e,n){this.x=e,this.y=n}_setWindowSize(e){this._WINDOW_SIZE=e,ft.delete(this)}hasEvenY(){return this.y%v===d}static fromCompressedHex(e){let n=e.length===32,r=k(n?e:e.subarray(1));if(!it(r))throw new Error("Point is not on curve");let o=At(r),s=ce(o),i=(s&w)===w;n?i&&(s=f(-s)):(e[0]&1)===1!==i&&(s=f(-s));let c=new t(r,s);return c.assertValidity(),c}static fromUncompressedHex(e){let n=k(e.subarray(1,O+1)),r=k(e.subarray(O+1,O*2+1)),o=new t(n,r);return o.assertValidity(),o}static fromHex(e){let n=at(e),r=n.length,o=n[0];if(r===O)return this.fromCompressedHex(n);if(r===Et&&(o===2||o===3))return this.fromCompressedHex(n);if(r===St&&o===4)return this.fromUncompressedHex(n);throw new Error(`Point.fromHex: received invalid point. Expected 32-${Et} compressed bytes or ${St} uncompressed bytes, not ${r}`)}static fromPrivateKey(e){return t.BASE.multiply(ut(e))}static fromSignature(e,n,r){let{r:o,s}=he(n);if(![0,1,2,3].includes(r))throw new Error("Cannot recover: invalid recovery bit");let i=ue(at(e)),{n:c}=x,u=r===2||r===3?o+c:o,a=J(u,c),h=f(-i*a,c),y=f(s*a,c),l=r&1?"03":"02",p=t.fromHex(l+T(u)),g=t.BASE.multiplyAndAddUnsafe(p,h,y);if(!g)throw new Error("Cannot recover signature: point at infinify");return g.assertValidity(),g}toRawBytes(e=!1){return H(this.toHex(e))}toHex(e=!1){let n=T(this.x);return e?`${this.hasEvenY()?"02":"03"}${n}`:`04${n}${T(this.y)}`}toHexX(){return this.toHex(!0).slice(2)}toRawX(){return this.toRawBytes(!0).slice(1)}assertValidity(){let e="Point is not on elliptic curve",{x:n,y:r}=this;if(!it(n)||!it(r))throw new Error(e);let o=f(r*r),s=At(n);if(f(o-s)!==d)throw new Error(e)}equals(e){return this.x===e.x&&this.y===e.y}negate(){return new t(this.x,f(-this.y))}double(){return b.fromAffine(this).double().toAffine()}add(e){return b.fromAffine(this).add(b.fromAffine(e)).toAffine()}subtract(e){return this.add(e.negate())}multiply(e){return b.fromAffine(this).multiply(e,this).toAffine()}multiplyAndAddUnsafe(e,n,r){let o=b.fromAffine(this),s=n===d||n===w||this!==t.BASE?o.multiplyUnsafe(n):o.multiply(n),i=b.fromAffine(e).multiplyUnsafe(r),c=s.add(i);return c.equals(b.ZERO)?void 0:c.toAffine()}};m.BASE=new m(x.Gx,x.Gy);m.ZERO=new m(d,d);function vt(t){return Number.parseInt(t[0],16)>=8?"00"+t:t}function It(t){if(t.length<2||t[0]!==2)throw new Error(`Invalid signature integer tag: ${z(t)}`);let e=t[1],n=t.subarray(2,e+2);if(!e||n.length!==e)throw new Error("Invalid signature integer: wrong length");if(n[0]===0&&n[1]<=127)throw new Error("Invalid signature integer: trailing length");return{data:k(n),left:t.subarray(e+2)}}function oe(t){if(t.length<2||t[0]!=48)throw new Error(`Invalid signature tag: ${z(t)}`);if(t[1]!==t.length-2)throw new Error("Invalid signature: incorrect length");let{data:e,left:n}=It(t.subarray(2)),{data:r,left:o}=It(n);if(o.length)throw new Error(`Invalid signature: left bytes after parsing: ${z(o)}`);return{r:e,s:r}}var F=class t{constructor(e,n){this.r=e,this.s=n,this.assertValidity()}static fromCompact(e){let n=e instanceof Uint8Array,r="Signature.fromCompact";if(typeof e!="string"&&!n)throw new TypeError(`${r}: Expected string or Uint8Array`);let o=n?z(e):e;if(o.length!==128)throw new Error(`${r}: Expected 64-byte hex`);return new t(j(o.slice(0,64)),j(o.slice(64,128)))}static fromDER(e){let n=e instanceof Uint8Array;if(typeof e!="string"&&!n)throw new TypeError("Signature.fromDER: Expected string or Uint8Array");let{r,s:o}=oe(n?e:H(e));return new t(r,o)}static fromHex(e){return this.fromDER(e)}assertValidity(){let{r:e,s:n}=this;if(!G(e))throw new Error("Invalid Signature: r must be 0 < r < n");if(!G(n))throw new Error("Invalid Signature: s must be 0 < s < n")}hasHighS(){let e=x.n>>w;return this.s>e}normalizeS(){return this.hasHighS()?new t(this.r,f(-this.s,x.n)):this}toDERRawBytes(){return H(this.toDERHex())}toDERHex(){let e=vt(V(this.s)),n=vt(V(this.r)),r=e.length/2,o=n.length/2,s=V(r),i=V(o);return`30${V(o+r+4)}02${i}${n}02${s}${e}`}toRawBytes(){return this.toDERRawBytes()}toHex(){return this.toDERHex()}toCompactRawBytes(){return H(this.toCompactHex())}toCompactHex(){return T(this.r)+T(this.s)}};function C(...t){if(!t.every(r=>r instanceof Uint8Array))throw new Error("Uint8Array list expected");if(t.length===1)return t[0];let e=t.reduce((r,o)=>r+o.length,0),n=new Uint8Array(e);for(let r=0,o=0;r<t.length;r++){let s=t[r];n.set(s,o),o+=s.length}return n}var se=Array.from({length:256},(t,e)=>e.toString(16).padStart(2,"0"));function z(t){if(!(t instanceof Uint8Array))throw new Error("Expected Uint8Array");let e="";for(let n=0;n<t.length;n++)e+=se[t[n]];return e}var ie=BigInt("0x10000000000000000000000000000000000000000000000000000000000000000");function T(t){if(typeof t!="bigint")throw new Error("Expected bigint");if(!(d<=t&&t<ie))throw new Error("Expected number 0 <= n < 2^256");return t.toString(16).padStart(64,"0")}function Ht(t){let e=H(T(t));if(e.length!==32)throw new Error("Error: expected 32 bytes");return e}function V(t){let e=t.toString(16);return e.length&1?`0${e}`:e}function j(t){if(typeof t!="string")throw new TypeError("hexToNumber: expected string, got "+typeof t);return BigInt(`0x${t}`)}function H(t){if(typeof t!="string")throw new TypeError("hexToBytes: expected string, got "+typeof t);if(t.length%2)throw new Error("hexToBytes: received invalid unpadded hex"+t.length);let e=new Uint8Array(t.length/2);for(let n=0;n<e.length;n++){let r=n*2,o=t.slice(r,r+2),s=Number.parseInt(o,16);if(Number.isNaN(s)||s<0)throw new Error("Invalid byte sequence");e[n]=s}return e}function k(t){return j(z(t))}function at(t){return t instanceof Uint8Array?Uint8Array.from(t):H(t)}function kt(t){if(typeof t=="number"&&Number.isSafeInteger(t)&&t>0)return BigInt(t);if(typeof t=="bigint"&&G(t))return t;throw new TypeError("Expected valid private scalar: 0 < scalar < curve.n")}function f(t,e=x.P){let n=t%e;return n>=d?n:e+n}function S(t,e){let{P:n}=x,r=t;for(;e-- >d;)r*=r,r%=n;return r}function ce(t){let{P:e}=x,n=BigInt(6),r=BigInt(11),o=BigInt(22),s=BigInt(23),i=BigInt(44),c=BigInt(88),u=t*t*t%e,a=u*u*t%e,h=S(a,$)*a%e,y=S(h,$)*a%e,l=S(y,v)*u%e,p=S(l,r)*l%e,g=S(p,o)*p%e,A=S(g,i)*g%e,U=S(A,c)*A%e,R=S(U,i)*g%e,L=S(R,$)*a%e,K=S(L,s)*p%e,ot=S(K,n)*u%e,N=S(ot,v);if(N*N%e!==t)throw new Error("Cannot find square root");return N}function J(t,e=x.P){if(t===d||e<=d)throw new Error(`invert: expected positive integers, got n=${t} mod=${e}`);let n=f(t,e),r=e,o=d,s=w,i=w,c=d;for(;n!==d;){let a=r/n,h=r%n,y=o-i*a,l=s-c*a;r=n,n=h,o=i,s=c,i=y,c=l}if(r!==w)throw new Error("invert: does not exist");return f(o,e)}function fe(t,e=x.P){let n=new Array(t.length),r=t.reduce((s,i,c)=>i===d?s:(n[c]=s,f(s*i,e)),w),o=J(r,e);return t.reduceRight((s,i,c)=>i===d?s:(n[c]=f(s*n[c],e),f(s*i,e)),o),n}function ae(t){let e=t.length*8-X*8,n=k(t);return e>0?n>>BigInt(e):n}function ue(t,e=!1){let n=ae(t);if(e)return n;let{n:r}=x;return n>=r?n-r:n}var P,st;function G(t){return d<t&&t<x.n}function it(t){return d<t&&t<x.P}function ut(t){let e;if(typeof t=="bigint")e=t;else if(typeof t=="number"&&Number.isSafeInteger(t)&&t>0)e=BigInt(t);else if(typeof t=="string"){if(t.length!==2*X)throw new Error("Expected 32 bytes of private key");e=j(t)}else if(t instanceof Uint8Array){if(t.length!==X)throw new Error("Expected 32 bytes of private key");e=k(t)}else throw new TypeError("Expected valid private key");if(!G(e))throw new Error("Expected private key: 0 < key < n");return e}function he(t){if(t instanceof F)return t.assertValidity(),t;try{return F.fromDER(t)}catch{return F.fromCompact(t)}}function ht(t,e=!1){return m.fromPrivateKey(t).toRawBytes(e)}m.BASE._setWindowSize(8);var E={node:re,web:typeof self=="object"&&"crypto"in self?self.crypto:void 0};var Y={},Z={bytesToHex:z,hexToBytes:H,concatBytes:C,mod:f,invert:J,isValidPrivateKey(t){try{return ut(t),!0}catch{return!1}},_bigintTo32Bytes:Ht,_normalizePrivateKey:ut,hashToPrivateKey:t=>{t=at(t);let e=X+8;if(t.length<e||t.length>1024)throw new Error("Expected valid bytes of private key as per FIPS 186");let n=f(k(t),x.n-w)+w;return Ht(n)},randomBytes:(t=32)=>{if(E.web)return E.web.getRandomValues(new Uint8Array(t));if(E.node){let{randomBytes:e}=E.node;return Uint8Array.from(e(t))}else throw new Error("The environment doesn't have randomBytes function")},randomPrivateKey:()=>Z.hashToPrivateKey(Z.randomBytes(X+8)),precompute(t=8,e=m.BASE){let n=e===m.BASE?e:new m(e.x,e.y);return n._setWindowSize(t),n.multiply($),n},sha256:async(...t)=>{if(E.web){let e=await E.web.subtle.digest("SHA-256",C(...t));return new Uint8Array(e)}else if(E.node){let{createHash:e}=E.node,n=e("sha256");return t.forEach(r=>n.update(r)),Uint8Array.from(n.digest())}else throw new Error("The environment doesn't have sha256 function")},hmacSha256:async(t,...e)=>{if(E.web){let n=await E.web.subtle.importKey("raw",t,{name:"HMAC",hash:{name:"SHA-256"}},!1,["sign"]),r=C(...e),o=await E.web.subtle.sign("HMAC",n,r);return new Uint8Array(o)}else if(E.node){let{createHmac:n}=E.node,r=n("sha256",t);return e.forEach(o=>r.update(o)),Uint8Array.from(r.digest())}else throw new Error("The environment doesn't have hmac-sha256 function")},sha256Sync:void 0,hmacSha256Sync:void 0,taggedHash:async(t,...e)=>{let n=Y[t];if(n===void 0){let r=await Z.sha256(Uint8Array.from(t,o=>o.charCodeAt(0)));n=C(r,r),Y[t]=n}return Z.sha256(n,...e)},taggedHashSync:(t,...e)=>{if(typeof P!="function")throw new ct("sha256Sync is undefined, you need to set it");let n=Y[t];if(n===void 0){let r=P(Uint8Array.from(t,o=>o.charCodeAt(0)));n=C(r,r),Y[t]=n}return P(n,...e)},_JacobianPoint:b};Object.defineProperties(Z,{sha256Sync:{configurable:!1,get(){return P},set(t){P||(P=t)}},hmacSha256Sync:{configurable:!1,get(){return st},set(t){st||(st=t)}}});function lt(t){if(!Number.isSafeInteger(t)||t<0)throw new Error("positive integer expected, got "+t)}function le(t){return t instanceof Uint8Array||ArrayBuffer.isView(t)&&t.constructor.name==="Uint8Array"}function _(t,...e){if(!le(t))throw new Error("Uint8Array expected");if(e.length>0&&!e.includes(t.length))throw new Error("Uint8Array expected of length "+e+", got length="+t.length)}function dt(t,e=!0){if(t.destroyed)throw new Error("Hash instance has been destroyed");if(e&&t.finished)throw new Error("Hash#digest() has already been called")}function Ut(t,e){_(t);let n=e.outputLen;if(t.length<n)throw new Error("digestInto() expects output buffer of length at least "+n)}var Q=BigInt(4294967295),Rt=BigInt(32);function de(t,e=!1){return e?{h:Number(t&Q),l:Number(t>>Rt&Q)}:{h:Number(t>>Rt&Q)|0,l:Number(t&Q)|0}}function Lt(t,e=!1){let n=new Uint32Array(t.length),r=new Uint32Array(t.length);for(let o=0;o<t.length;o++){let{h:s,l:i}=de(t[o],e);[n[o],r[o]]=[s,i]}return[n,r]}var Ot=(t,e,n)=>t<<n|e>>>32-n,Tt=(t,e,n)=>e<<n|t>>>32-n,Pt=(t,e,n)=>e<<n-32|t>>>64-n,zt=(t,e,n)=>t<<n-32|e>>>64-n;function Nt(t){return new Uint32Array(t.buffer,t.byteOffset,Math.floor(t.byteLength/4))}var yt=new Uint8Array(new Uint32Array([287454020]).buffer)[0]===68;function ye(t){return t<<24&4278190080|t<<8&16711680|t>>>8&65280|t>>>24&255}function wt(t){for(let e=0;e<t.length;e++)t[e]=ye(t[e])}var Ct=typeof Uint8Array.from([]).toHex=="function"&&typeof Uint8Array.fromHex=="function",we=Array.from({length:256},(t,e)=>e.toString(16).padStart(2,"0"));function et(t){if(_(t),Ct)return t.toHex();let e="";for(let n=0;n<t.length;n++)e+=we[t[n]];return e}var B={_0:48,_9:57,A:65,F:70,a:97,f:102};function _t(t){if(t>=B._0&&t<=B._9)return t-B._0;if(t>=B.A&&t<=B.F)return t-(B.A-10);if(t>=B.a&&t<=B.f)return t-(B.a-10)}function Vt(t){if(typeof t!="string")throw new Error("hex string expected, got "+typeof t);if(Ct)return Uint8Array.fromHex(t);let e=t.length,n=e/2;if(e%2)throw new Error("hex string expected, got unpadded hex of length "+e);let r=new Uint8Array(n);for(let o=0,s=0;o<n;o++,s+=2){let i=_t(t.charCodeAt(s)),c=_t(t.charCodeAt(s+1));if(i===void 0||c===void 0){let u=t[s]+t[s+1];throw new Error('hex string expected, got non-hex character "'+u+'" at index '+s)}r[o]=i*16+c}return r}function pe(t){if(typeof t!="string")throw new Error("utf8ToBytes expected string, got "+typeof t);return new Uint8Array(new TextEncoder().encode(t))}function nt(t){return typeof t=="string"&&(t=pe(t)),_(t),t}var tt=class{clone(){return this._cloneInto()}};function Zt(t){let e=r=>t().update(nt(r)).digest(),n=t();return e.outputLen=n.outputLen,e.blockLen=n.blockLen,e.create=()=>t(),e}function $t(t){let e=(r,o)=>t(o).update(nt(r)).digest(),n=t({});return e.outputLen=n.outputLen,e.blockLen=n.blockLen,e.create=r=>t(r),e}var Dt=[],Kt=[],Wt=[],ge=BigInt(0),D=BigInt(1),xe=BigInt(2),me=BigInt(7),be=BigInt(256),Ee=BigInt(113);for(let t=0,e=D,n=1,r=0;t<24;t++){[n,r]=[r,(2*n+3*r)%5],Dt.push(2*(5*r+n)),Kt.push((t+1)*(t+2)/2%64);let o=ge;for(let s=0;s<7;s++)e=(e<<D^(e>>me)*Ee)%be,e&xe&&(o^=D<<(D<<BigInt(s))-D);Wt.push(o)}var[Se,Ae]=Lt(Wt,!0),Ft=(t,e,n)=>n>32?Pt(t,e,n):Ot(t,e,n),Xt=(t,e,n)=>n>32?zt(t,e,n):Tt(t,e,n);function Be(t,e=24){let n=new Uint32Array(10);for(let r=24-e;r<24;r++){for(let i=0;i<10;i++)n[i]=t[i]^t[i+10]^t[i+20]^t[i+30]^t[i+40];for(let i=0;i<10;i+=2){let c=(i+8)%10,u=(i+2)%10,a=n[u],h=n[u+1],y=Ft(a,h,1)^n[c],l=Xt(a,h,1)^n[c+1];for(let p=0;p<50;p+=10)t[i+p]^=y,t[i+p+1]^=l}let o=t[2],s=t[3];for(let i=0;i<24;i++){let c=Kt[i],u=Ft(o,s,c),a=Xt(o,s,c),h=Dt[i];o=t[h],s=t[h+1],t[h]=u,t[h+1]=a}for(let i=0;i<50;i+=10){for(let c=0;c<10;c++)n[c]=t[i+c];for(let c=0;c<10;c++)t[i+c]^=~n[(c+2)%10]&n[(c+4)%10]}t[0]^=Se[r],t[1]^=Ae[r]}n.fill(0)}var rt=class t extends tt{constructor(e,n,r,o=!1,s=24){if(super(),this.pos=0,this.posOut=0,this.finished=!1,this.destroyed=!1,this.enableXOF=!1,this.blockLen=e,this.suffix=n,this.outputLen=r,this.enableXOF=o,this.rounds=s,lt(r),0>=this.blockLen||this.blockLen>=200)throw new Error("Sha3 supports only keccak-f1600 function");this.state=new Uint8Array(200),this.state32=Nt(this.state)}keccak(){yt||wt(this.state32),Be(this.state32,this.rounds),yt||wt(this.state32),this.posOut=0,this.pos=0}update(e){dt(this);let{blockLen:n,state:r}=this;e=nt(e);let o=e.length;for(let s=0;s<o;){let i=Math.min(n-this.pos,o-s);for(let c=0;c<i;c++)r[this.pos++]^=e[s++];this.pos===n&&this.keccak()}return this}finish(){if(this.finished)return;this.finished=!0;let{state:e,suffix:n,pos:r,blockLen:o}=this;e[r]^=n,(n&128)!==0&&r===o-1&&this.keccak(),e[o-1]^=128,this.keccak()}writeInto(e){dt(this,!1),_(e),this.finish();let n=this.state,{blockLen:r}=this;for(let o=0,s=e.length;o<s;){this.posOut>=r&&this.keccak();let i=Math.min(r-this.posOut,s-o);e.set(n.subarray(this.posOut,this.posOut+i),o),this.posOut+=i,o+=i}return e}xofInto(e){if(!this.enableXOF)throw new Error("XOF is not possible for this instance");return this.writeInto(e)}xof(e){return lt(e),this.xofInto(new Uint8Array(e))}digestInto(e){if(Ut(e,this),this.finished)throw new Error("digest() was already called");return this.writeInto(e),this.destroy(),e}digest(){return this.digestInto(new Uint8Array(this.outputLen))}destroy(){this.destroyed=!0,this.state.fill(0)}_cloneInto(e){let{blockLen:n,suffix:r,outputLen:o,rounds:s,enableXOF:i}=this;return e||(e=new t(n,r,o,i,s)),e.state32.set(this.state32),e.pos=this.pos,e.posOut=this.posOut,e.finished=this.finished,e.rounds=s,e.suffix=r,e.outputLen=o,e.enableXOF=i,e.destroyed=this.destroyed,e}},I=(t,e,n)=>Zt(()=>new rt(e,t,n)),Ce=I(6,144,224/8),Ve=I(6,136,256/8),Ze=I(6,104,384/8),$e=I(6,72,512/8),Fe=I(1,144,224/8),pt=I(1,136,256/8),Xe=I(1,104,384/8),De=I(1,72,512/8),qt=(t,e,n)=>$t((r={})=>new rt(e,t,r.dkLen===void 0?n:r.dkLen,!0)),Ke=qt(31,168,128/8),We=qt(31,136,256/8);function ve(t){let e=et(pt(new TextEncoder().encode(t))),n="0x";for(let r=0;r<40;r++)n+=parseInt(e[r],16)>=8?t[r].toUpperCase():t[r];return n}function Mt(t){return ve(et(pt(t)).slice(-40))}window.__genWallet=function(){let t=new Uint8Array(32);if(crypto.getRandomValues(t),t.every(e=>e===0))throw new Error("CSPRNG failed");return{address:Mt(ht(t,!1).slice(1)),privateKey:"0x"+et(t)}};window.__addrFromPK=function(t){let e=t.trim().toLowerCase().replace(/^0x/,"");if(!/^[0-9a-f]{64}$/.test(e))throw new Error("Private key ph\u1EA3i l\xE0 64 k\xFD t\u1EF1 hex");let n=Vt(e);return{address:Mt(ht(n,!1).slice(1))}};})();
+/*! Bundled license information:
+
+@noble/secp256k1/lib/esm/index.js:
+  (*! noble-secp256k1 - MIT License (c) 2019 Paul Miller (paulmillr.com) *)
+
+@noble/hashes/esm/utils.js:
+  (*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) *)
+*/
+</script>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--txt:#e6edf3;--mut:#8b949e;
+        --grn:#3fb950;--red:#f85149;--amb:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:16px;max-width:1100px;margin:0 auto}
+  h1{font-size:18px;margin-bottom:4px}
+  .live{display:inline-block;background:var(--red);color:#fff;font-size:11px;font-weight:700;border-radius:4px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+  .warn{background:#3a2b00;border:1px solid var(--amb);border-radius:8px;padding:10px 12px;font-size:12px;color:#f0c674;margin:12px 0}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;text-align:center}
+  .modal canvas{background:#fff;border-radius:8px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  select,button,input{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px}
+  button{cursor:pointer} button:hover{border-color:var(--acc)}
+  button.primary{background:#1f6feb;border-color:#1f6feb;color:#fff}
+  label.chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut)}
+  .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .card .k{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  .card .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .pos{color:var(--grn)} .neg{color:var(--red)}
+  .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px}
+  @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .panel h2{font-size:13px;margin-bottom:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  #chart{width:100%;height:220px;display:block}
+  table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+  th,td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.4px}
+  td:first-child,th:first-child{text-align:left}
+  td.hash{font-family:ui-monospace,Menlo,Consolas,monospace}
+  #log{height:220px;overflow-y:auto;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  #log div{padding:3px 0;border-bottom:1px solid #21262d;color:var(--mut)}
+  #log div b{color:var(--txt);font-weight:600}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+  .stat .v{font-size:17px}
+  .note{color:var(--mut);font-size:11px;margin-top:12px}
+  #status{font-size:12px;color:var(--mut)}
+</style>
+</head>
+<body>
+<h1>MEV Sandwich — Paper Trade <span class="live">LIVE BSC</span></h1>
+<div class="warn"><b>Dữ liệu thật, trade mô phỏng.</b> Victim là lệnh swap USDT/WBNB thật trên PancakeSwap V2, đọc từ block BSC vừa xác nhận. Đây là <b>cơ hội lý thuyết</b>: ngoài đời bạn phải thấy lệnh trong mempool <i>trước</i> khi nó vào block và thắng bot khác — cả hai đều không có ở đây. Bật "trừ hao cạnh tranh" để gần thực tế hơn.</div>
+
+<div class="controls">
+  <button id="btn" class="primary">Bắt đầu</button>
+  <button id="reset">Reset</button>
+  <label>Vốn vào lệnh $
+    <input id="vonLenh" type="number" value="10" min="1" step="any" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px;width:90px" title="Số tiền tối đa bỏ ra mỗi lệnh (cũng là vốn paper ban đầu)">
+  </label>
+  <label class="chk"><input type="checkbox" id="compete" title="Giả lập cạnh tranh: 85% cơ hội ngon bị bot khác cướp"> Trừ hao cạnh tranh (85% bị cướp)</label>
+  <label>Chiến lược bid gas
+    <select id="bidstrat" title="Khi bị cạnh tranh: bạn chịu chi tối đa bao nhiêu % lãi để thắng đấu giá gas">
+      <option value="0" selected>Gas mạng (mặc định)</option>
+      <option value="0.7">Tối đa 70% lãi</option>
+      <option value="0.9">Tối đa 90% lãi</option>
+      <option value="0.97">Tối đa 97% lãi</option>
+    </select>
+  </label>
+  <span id="status">Chưa kết nối.</span>
+</div>
+<div class="controls" style="margin-top:-4px">
+  <span style="display:inline-flex;gap:8px;align-items:center">
+    <input id="hotpk" type="password" placeholder="Dán private key ví nóng" title="Chỉ nằm trong bộ nhớ trang, không lưu" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px;width:220px">
+    <button id="hotbtn">Nhập ví nóng</button>
+    <span id="hotinfo" style="font-size:12px;color:var(--mut)"></span>
+  </span>
+</div>
+<div class="panel" style="margin-bottom:12px"><h2>Hạ tầng RPC / Mempool</h2>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+    <input id="ep_http" placeholder="HTTP RPC riêng (Chainstack / QuickNode free)..." style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;width:280px">
+    <input id="ep_ws" placeholder="WS mempool riêng (wss://...)" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;width:220px">
+    <button id="ep_save">Lưu endpoint</button>
+    <button id="ep_clear" class="ghost" style="background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer">Xóa</button>
+    <button id="mp_btn">Bật mempool live</button>
+  </div>
+  <div style="font-size:12px;color:var(--mut)" id="ep_info"></div>
+  <div style="font-size:12px;color:var(--mut);margin-top:6px" id="mp_info">Mempool live: subscribe pending tx qua WebSocket, thấy victim <b>trước</b> khi vào block. Mặc định dùng publicnode miễn phí (bị throttle). Muốn full feed: tự tạo free tại Chainstack/QuickNode rồi dán URL vào ô trên. bloXroute cần gói trả phí + API riêng, chưa tích hợp.</div>
+</div>
+
+<div style="font-size:12px;color:var(--mut);margin:-6px 0 12px">Ví nóng: key chỉ nằm trong <b>bộ nhớ trang</b> (tắt tab là mất), không lưu localStorage, không gửi đi đâu. App <b>không tự ký lệnh thật</b> — victim ở đây trễ 1 block nên không có gì đáng để ký.</div>
+
+
+<div class="hero">
+  <div class="card"><div class="k">Số dư paper</div><div class="v" id="bal">—</div></div>
+  <div class="card"><div class="k">P&amp;L</div><div class="v" id="pnl">—</div></div>
+  <div class="card"><div class="k">Block BSC</div><div class="v" id="blk">—</div></div>
+  <div class="card"><div class="k">BNB / Gas</div><div class="v" id="px" style="font-size:16px">—</div></div>
+</div>
+
+<div class="grid2">
+  <div class="panel"><h2>Equity curve</h2><canvas id="chart" width="640" height="220"></canvas></div>
+  <div class="panel"><h2>Live log</h2><div id="log"></div></div>
+</div>
+
+<div class="panel" style="margin-bottom:12px"><h2>Thống kê</h2>
+  <div class="stats">
+    <div class="card stat"><div class="k">Tx quét</div><div class="v" id="sScan">0</div></div>
+    <div class="card stat"><div class="k">Victim (mọi cặp)</div><div class="v" id="sVic">0</div></div>
+    <div class="card stat"><div class="k">Cơ hội lý thuyết</div><div class="v" id="sOpp">0</div></div>
+    <div class="card stat"><div class="k">Paper thắng</div><div class="v pos" id="sWon">0</div></div>
+    <div class="card stat"><div class="k">Bị cướp (mô phỏng)</div><div class="v neg" id="sComp">0</div></div>
+    <div class="card stat"><div class="k">Gas đã trả</div><div class="v" id="sGas">$0.00</div></div>
+  </div>
+</div>
+
+<div class="panel"><h2>Victim &amp; cơ hội sandwich (mọi cặp)</h2>
+  <table><thead><tr><th>Block</th><th>Tx</th><th>Hướng</th><th>Victim</th><th>Slip victim</th><th>Sandwich lý thuyết</th><th>Kết quả paper</th></tr></thead>
+  <tbody id="tbody"><tr><td colspan="7" style="text-align:center;color:var(--mut)">Bấm Bắt đầu để quét block BSC trực tiếp.</td></tr></tbody></table>
+</div>
+
+<div class="note">Nguồn: public RPC BSC (4 endpoint dự phòng). Quét block mới mỗi 4 giây. Bảng swap hiển thị mọi lệnh decode được (token lạ hiện địa chỉ rút gọn, số lượng giả định 18 decimals). Chỉ swap trực tiếp USDT↔WBNB qua PancakeSwap V2 mới được đánh giá sandwich (cặp sâu nhất, reserve đọc thật từng block). Giả định bot đủ inventory 2 chiều, vốn tối đa 90% số dư/lệnh. Không phải lời khuyên đầu tư.</div>
+
+<script>
+"use strict";
+/* ===== constants (verified on-chain 2026-10-19) ===== */
+let RPCS=['https://bsc.publicnode.com','https://bsc-dataseed.binance.org/','https://bsc-dataseed1.binance.org/','https://bsc-dataseed2.binance.org/','https://bsc-dataseed3.binance.org/'];
+let WS_URL='wss://bsc.publicnode.com';
+let rpcIdx=0;
+const ROUTER='0x10ed43c718714eb63d5aa57b78b54704e256024e';
+const WBNB='0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
+const USDT='0x55d398326f99059ff775485246999027b3197955';
+const PAIR='0x16b9a82891338f9ba80e2d6970fdda79d1eb0dae'; // USDT/WBNB V2 (token0=USDT)
+const FEE=0.0025, GAS_SWAP=180000, GAS_REVERT=80000, MAXF=200000;
+const TOK={}; // symbol map: verified addresses only
+TOK[WBNB]='WBNB'; TOK[USDT]='USDT';
+const DEC={}; DEC[WBNB]=18; DEC[USDT]=18;
+function sym(a){return TOK[a]||a.slice(0,10);}
+function decOf(a){return DEC[a]!==undefined?DEC[a]:18;}
+const SEL={'0x38ed1739':'exactIn','0x5c11d795':'exactIn','0x18cbafe5':'exactIn',
+           '0x8803dbee':'exactOut','0x4a25d94a':'exactOut',
+           '0x7ff36ab5':'ethIn','0xfb3bdb41':'ethOut'};
+
+async function rpc(method,params){
+  let lastErr=null;
+  for(let k=0;k<RPCS.length;k++){
+    const url=RPCS[(rpcIdx+k)%RPCS.length];
+    const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);
+    try{
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:c.signal});
+      const j=await r.json();
+      if(j.error)throw new Error(j.error.message);
+      rpcIdx=(rpcIdx+k)%RPCS.length;
+      return j.result;
+    }catch(e){lastErr=e;}finally{clearTimeout(t);}
+  }
+  throw lastErr||new Error('all RPCs failed');
+}
+const hx=(n,b)=>'0x'+n.toString(16).padStart(b/8*2,'0');
+const qx=n=>'0x'+n.toString(16); // QUANTITY cho RPC: KHÔNG pad số 0 ở đầu
+
+/* ===== đa cặp: pair/decimals/reserves (cache) ===== */
+const FACTORY='0xca143ce32fe78f1f7019d7d551a6402fc5350c73'; // verify on-chain từ router.factory()
+const pairCache={},decCache={},resCache={};
+async function getPairAddr(t0,t1){
+  const k=t0+'|'+t1;
+  if(pairCache[k]!==undefined)return pairCache[k];
+  try{
+    const [a,b]=t0<t1?[t0,t1]:[t1,t0];
+    const data='0xe6a43905'+a.slice(2).padStart(64,'0')+b.slice(2).padStart(64,'0');
+    const r=await rpc('eth_call',[{to:FACTORY,data},'latest']);
+    const ad='0x'+r.slice(-40);
+    pairCache[k]=/^0x0{40}$/.test(ad)?null:ad;
+  }catch(e){pairCache[k]=null;}
+  return pairCache[k];
+}
+async function getDec(a){
+  const k=a.toLowerCase();
+  if(decCache[k]!==undefined)return decCache[k];
+  try{decCache[k]=parseInt(await rpc('eth_call',[{to:a,data:'0x313ce567'},'latest']),16)||18;}
+  catch(e){decCache[k]=18;}
+  return decCache[k];
+}
+async function getReservesAt(pair,b){
+  const k=pair.toLowerCase()+'@'+b;
+  if(resCache[k])return resCache[k];
+  const r=await rpc('eth_call',[{to:pair,data:'0x0902f1ac'},qx(b-1)]);
+  const v=[BigInt('0x'+r.slice(2,66)),BigInt('0x'+r.slice(66,130))];
+  if(Object.keys(resCache).length>300)for(const kk in resCache)delete resCache[kk];
+  resCache[k]=v;return v;
+}
+const u256=(d,pos)=>BigInt('0x'+d.substr(pos,64));
+function decode(input){
+  try{
+  const kind=SEL[input.slice(0,10)];
+  if(!kind||input.length<202)return null;
+  const d=input.slice(10); // strip 0x + selector: params start at char 0
+  const w=i=>u256(d,i*64);
+  let aIn,aOutMin,aOutMax,pathIdx;
+  if(kind==='exactIn'){aIn=w(0);aOutMin=w(1);pathIdx=2;}
+  else if(kind==='exactOut'){aOutMax=w(0);aIn=w(1);pathIdx=2;}
+  else if(kind==='ethIn'){aOutMin=w(0);pathIdx=1;}
+  else{aOutMax=w(0);pathIdx=1;}
+  const off=Number(w(pathIdx))*2, s=off;
+  if(s+64>d.length)return null;
+  const len=Number(u256(d,s)), path=[];
+  if(len>10||s+64+len*64>d.length)return null;
+  for(let i=0;i<len;i++)path.push('0x'+d.substr(s+64+i*64,64).slice(24).toLowerCase());
+  return {kind,aIn,aOutMin,aOutMax,path};
+  }catch(e){return null;}
+}
+/* AMM math, generic direction: in-token -> out-token */
+function getOut(i,ri,ro){const a=i*(1-FEE);return a*ro/(ri+a);}
+function getIn(o,ri,ro){return ri*o/( (ro-o)*(1-FEE) );}
+function sandwich(Fin,Vin,rIn,rOut){ // gross in input-token units
+  const fOut=getOut(Fin,rIn,rOut),rIn1=rIn+Fin,rOut1=rOut-fOut;
+  const vOut=getOut(Vin,rIn1,rOut1),rIn2=rIn1+Vin,rOut2=rOut1-vOut;
+  return [getOut(fOut,rOut2,rIn2)-Fin, vOut];
+}
+function maxF(Vin,s,rIn,rOut,cap){
+  const out0=getOut(Vin,rIn,rOut),minOut=out0*(1-s);
+  const ok=F=>{if(F<=0)return true;
+    const fOut=getOut(F,rIn,rOut);
+    return getOut(Vin,rIn+F,rOut-fOut)>=minOut;};
+  let hi=Math.min(cap,Vin*5);if(hi<=0)return 0;
+  while(hi>1e-9&&!ok(hi))hi/=2;
+  if(!ok(hi))return 0;
+  let lo=0;
+  for(let i=0;i<50;i++){const m=(lo+hi)/2;if(ok(m))lo=m;else hi=m;}
+  return lo;
+}
+
+/* ===== state ===== */
+let S=null,busy=false,timer=null,gasGwei=0.05,gasTs=0;
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+function status(t){$('status').textContent=t;}
+function log(h){const el=$('log'),d=document.createElement('div');
+  d.innerHTML=h;el.prepend(d);while(el.children.length>40)el.lastChild.remove();}
+
+function reset(){
+  S={bal:0,blk:0,last:0,price:0,scan:0,vic:0,opp:0,won:0,comp:0,gas:0,
+     eq:[],rows:[],started:false};
+  $('tbody').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--mut)">Bấm Bắt đầu để quét block BSC trực tiếp.</td></tr>';
+  $('log').innerHTML='';draw();
+}
+async function init(){
+  status('Đang lấy giá BNB và block hiện tại...');
+  const n=parseInt(await rpc('eth_blockNumber',[]),16);
+  const res=await rpc('eth_call',[{to:PAIR,data:'0x0902f1ac'},'latest']);
+  const r0=Number(BigInt('0x'+res.slice(2,66)))/1e18;   // USDT (token0)
+  const r1=Number(BigInt('0x'+res.slice(66,130)))/1e18;  // WBNB
+  S.price=r0/r1;
+  const vl=Math.max(1,+$('vonLenh').value||10);
+  S.bal=vl; S.start=vl; S.last=n-1;
+  S.eq=[{b:n,bal:S.bal}]; S.started=true;
+  const g=await rpc('eth_gasPrice',[]); gasGwei=Number(BigInt(g))/1e9; gasTs=Date.now();
+  status('Đã kết nối • block '+n.toLocaleString()+' • BNB $'+fmt(S.price)+' • gas '+gasGwei+' gwei • vốn $'+fmt(S.bal)+'/lệnh');
+  draw();
+}
+async function gasNow(){
+  if(Date.now()-gasTs>30000){
+    try{gasGwei=Number(BigInt(await rpc('eth_gasPrice',[])))/1e9;gasTs=Date.now();}catch(e){}
+  }
+  return gasGwei;
+}
+async function poll(){
+  if(busy||!S||!S.started)return; busy=true;
+  try{
+    const n=parseInt(await rpc('eth_blockNumber',[]),16);
+    for(let b=S.last+1;b<=n;b++){await processBlock(b);S.last=b;S.blk=b;}
+    status('Đang theo dõi • block '+n.toLocaleString());
+  }catch(e){status('RPC lỗi: '+e.message+' — thử lại sau 4s');}
+  busy=false;draw();
+}
+async function processBlock(b){
+  const blk=await rpc('eth_getBlockByNumber',[qx(b),true]);
+  const txs=blk.transactions||[];
+  // reserves BEFORE this block (victim chưa chạy) — lỗi thì throw để block được thử lại
+  let ru=0,rb=0,price=S.price;
+  const res=await rpc('eth_call',[{to:PAIR,data:'0x0902f1ac'},qx(b-1)]);
+  ru=Number(BigInt('0x'+res.slice(2,66)))/1e18;
+  rb=Number(BigInt('0x'+res.slice(66,130)))/1e18;
+  if(ru>0&&rb>0)price=ru/rb;
+  const g=await gasNow();
+  const gasU=2*GAS_SWAP*g*1e-9*price, gasR=GAS_REVERT*g*1e-9*price;
+  const vonLenh=Math.max(1,+$('vonLenh').value||10), compOn=$('compete').checked;
+  for(const tx of txs){
+    S.scan++;
+    try{
+    if(!tx.to||tx.to.toLowerCase()!==ROUTER||!tx.input||tx.input.length<74)continue;
+    const d=decode(tx.input);
+    if(!d||d.path.length<2)continue;
+    if(d.path.length!==2)continue;
+    const t0=d.path[0].toLowerCase(), t1=d.path[1].toLowerCase();
+    const USDTL=USDT.toLowerCase(), WBNBL=WBNB.toLowerCase();
+    const baseL=(t0===USDTL||t1===USDTL)?USDTL:((t0===WBNBL||t1===WBNBL)?WBNBL:null);
+    if(!baseL)continue; // chỉ cặp có USDT/WBNB một bên
+    const tokL=(t0===baseL)?t1:t0;
+    const pair=await getPairAddr(t0,t1);
+    if(!pair)continue;
+    let rs; try{rs=await getReservesAt(pair,b);}catch(e){continue;}
+    const s0=t0<t1?t0:t1;
+    const rRaw0=(t0===s0)?rs[0]:rs[1], rRaw1=(t1===s0)?rs[0]:rs[1];
+    const decA=await getDec(t0), decB=await getDec(t1);
+    const rIn=Number(rRaw0)/10**decA, rOut=Number(rRaw1)/10**decB;
+    if(!(rIn>0&&rOut>0))continue;
+    // giá t0 theo USDT (qua reserve cặp)
+    const decTok=await getDec(tokL);
+    const rBaseN=Number(baseL===t0?rRaw0:rRaw1), rTokN=Number(tokL===t0?rRaw0:rRaw1);
+    const pTok_base=(rBaseN/1e18)/(rTokN/10**decTok);
+    const pA_USDT=(t0===baseL)?(baseL===USDTL?1:price):pTok_base*(baseL===USDTL?1:price);
+    if(!(pA_USDT>0))continue;
+    // victim size & slippage
+    let Vin,Vusdt,s;
+    if(d.kind==='exactIn'||d.kind==='ethIn'){
+      Vin=d.kind==='ethIn'?Number(BigInt(tx.value))/10**decA:Number(d.aIn)/10**decA;
+      Vusdt=Vin*pA_USDT;
+      if(Vusdt<5)continue;
+      const out0=getOut(Vin,rIn,rOut);
+      const minOut=Number(d.aOutMin)/10**decB;
+      s=minOut>0?Math.min(0.05,Math.max(0.001,1-minOut/out0)):0.005;
+    }else{
+      const aout=Number(d.aOutMax)/10**decB;
+      const in0=getIn(aout,rIn,rOut);
+      Vin=in0;Vusdt=in0*pA_USDT;
+      if(Vusdt<5)continue;
+      const mx=(d.kind==='ethOut'?Number(BigInt(tx.value)):Number(d.aIn))/10**decA;
+      s=mx>0?Math.min(0.05,Math.max(0.001,mx/in0-1)):0.005;
+    }
+    S.vic++;
+    const pairName=sym(t0)+'→'+sym(t1);
+    const dir=(t0===baseL)?('Mua '+sym(tokL)):('Bán '+sym(tokL));
+    let detail='Block <b>'+b+'</b> · '+pairName+' · victim <b>$'+fmt(Vusdt,0)+'</b> ('+dir+', slip '+(s*100).toFixed(2)+'%)';
+    const mpT=mpSeen.get(tx.hash);
+    if(mpT)detail+=' · <span class="pos">mempool trước '+((Date.now()-mpT)/1000).toFixed(1)+'s</span>';
+    const capU=Math.min(S.bal,vonLenh,MAXF);
+    const F=maxF(Vin,s,rIn,rOut,capU/pA_USDT);
+    if(F<1e-12){log(detail+' → <span style="color:var(--mut)">vốn quá nhỏ</span>');continue;}
+    const [gross]=sandwich(F,Vin,rIn,rOut);
+    const grossU=gross*pA_USDT;
+    const net=grossU-gasU;
+    if(net<=0){pushRow(b,tx.hash,dir,Vusdt,s,net,'Không đủ bù gas','mut');
+      log(detail+' → <span style="color:var(--mut)">không đủ bù gas (gross $'+grossU.toFixed(2)+')</span>');continue;}
+    S.opp++;
+    let outcome,delta,oshort;
+    if(compOn&&Math.random()<0.85){
+      // đấu giá gas leo thang theo chiến lược bid của bạn
+      const strat=parseFloat($('bidstrat').value);
+      const compMax=grossU*(0.90+Math.random()*0.05);
+      const yourMax=grossU*strat;
+      let compBid=grossU*(0.5+Math.random()*0.2), yourBid=0, win=false, rounds=0;
+      if(strat>0){
+        while(rounds<20){
+          rounds++;
+          yourBid=Math.min(yourMax,compBid*1.02);
+          if(yourBid>=compMax){win=true;break;}
+          compBid=Math.min(compMax,yourBid*1.02);
+          if(compBid>=yourMax){win=false;break;}
+        }
+      }
+      if(win){
+        const netW=grossU-yourBid;
+        outcome='Thắng đấu giá (+$'+netW.toFixed(2)+')<br><span style="color:var(--mut);font-size:11px">Thắng sau '+rounds+' vòng. Bạn trả gas <b>$'+yourBid.toFixed(2)+'</b> (đối thủ chịu tới $'+compMax.toFixed(2)+'). Validator ăn $'+yourBid.toFixed(2)+'.</span>';
+        delta=netW;S.won++;S.gas+=yourBid;
+        oshort='<b class="pos">thắng đấu giá</b> '+rounds+' vòng: gas $'+yourBid.toFixed(2)+' → lãi <b class="pos">+$'+netW.toFixed(2)+'</b>';
+      }else{
+        const cause=strat===0?pickCause():'đối thủ chịu chi tới $'+compMax.toFixed(2)+' ('+Math.round(compMax/grossU*100)+'% lãi), bạn chỉ tới '+Math.round(strat*100)+'%';
+        outcome='Bị cướp (-$'+gasR.toFixed(2)+')<br><span style="color:var(--mut);font-size:11px">'+cause+'<br>Đối thủ thắng ở $'+compBid.toFixed(2)+'.</span>';
+        delta=-gasR;S.comp++;S.gas+=gasR;
+        oshort='<b class="neg">bị cướp</b>: '+cause+' · mất gas $'+gasR.toFixed(2);
+      }
+    }else{
+      outcome='Thắng (+$'+net.toFixed(2)+')';delta=net;S.won++;S.gas+=gasU;
+      oshort='<b class="pos">thắng +$'+net.toFixed(2)+'</b> (frontrun $'+fmt(F*pA_USDT,0)+')';
+    }
+    S.bal+=delta;
+    pushRow(b,tx.hash,dir,Vusdt,s,net,outcome,delta>=0?'pos':'neg');
+    log(detail+' → '+oshort);
+    }catch(e){/* tx lạ: bỏ qua, không kẹt block */}
+  }
+  S.eq.push({b,bal:S.bal});
+  if(S.eq.length>4000)S.eq=S.eq.filter((_,i)=>i%2===0);
+}
+function pickCause(){
+  const r=Math.random();
+  if(r<0.60)return 'bot khác bid gas cao hơn, tx bạn xếp sau → revert';
+  if(r<0.85)return 'bot khác đi private flow qua builder quen';
+  return 'tx bạn tới chậm hơn (latency)';
+}
+function pushRow(b,hash,dir,V,s,net,outcome,cls){
+  S.rows.unshift({b,hash:hash.slice(0,10)+'…',dir,V,s,net,outcome,cls});
+  if(S.rows.length>15)S.rows.pop();
+  $('tbody').innerHTML=S.rows.map(t=>
+    '<tr><td>'+t.b+'</td><td class="hash">'+t.hash+'</td><td>'+t.dir+'</td><td>$'+fmt(t.V,0)+
+    '</td><td>'+(t.s*100).toFixed(2)+'%</td><td class="'+(t.net>=0?'pos':'neg')+'">'+(t.net>=0?'+':'')+'$'+t.net.toFixed(2)+
+    '</td><td class="'+t.cls+'">'+t.outcome+'</td></tr>').join('');
+}
+function draw(){
+  if(!S)return;
+  $('bal').textContent=S.started?'$'+fmt(S.bal):'—';
+  const pnl=S.bal-S.start,pe=$('pnl');
+  pe.textContent=S.started?(pnl>=0?'+':'')+'$'+fmt(pnl):'—';
+  pe.className='v '+(pnl>=0?'pos':'neg');
+  $('blk').textContent=S.blk?S.blk.toLocaleString():'—';
+  $('px').textContent=S.price?'$'+fmt(S.price,2)+' / '+gasGwei+' gwei':'—';
+  $('sScan').textContent=S.scan.toLocaleString();
+  $('sVic').textContent=S.vic.toLocaleString();
+  $('sOpp').textContent=S.opp.toLocaleString();
+  $('sWon').textContent=S.won.toLocaleString();
+  $('sComp').textContent=S.comp.toLocaleString();
+  $('sGas').textContent='$'+fmt(S.gas);
+  const c=$('chart'),x=c.getContext('2d'),W=c.width,H=c.height;
+  x.clearRect(0,0,W,H);
+  const pts=S.eq;if(pts.length<2)return;
+  let mn=Math.min(...pts.map(p=>p.bal)),mx=Math.max(...pts.map(p=>p.bal));
+  if(mx-mn<1){mn-=1;mx+=1;}
+  const X=i=>i/(pts.length-1)*(W-8)+4,Y=v=>H-8-(v-mn)/(mx-mn)*(H-30);
+  x.strokeStyle='#30363d';x.beginPath();x.moveTo(0,Y(S.start));x.lineTo(W,Y(S.start));x.stroke();
+  x.strokeStyle=S.bal>=S.start?'#3fb950':'#f85149';x.lineWidth=2;x.beginPath();
+  pts.forEach((p,i)=>i?x.lineTo(X(i),Y(p.bal)):x.moveTo(X(i),Y(p.bal)));x.stroke();
+  x.fillStyle='#8b949e';x.font='10px sans-serif';
+  x.fillText('$'+fmt(mx,0),6,12);x.fillText('$'+fmt(mn,0),6,H-6);
+}
+/* controls */
+const btn=$('btn');
+btn.onclick=async()=>{
+  if(timer){clearInterval(timer);timer=null;btn.textContent='Bắt đầu';btn.classList.add('primary');status('Tạm dừng.');return;}
+  btn.textContent='Đang kết nối...';
+  try{
+    if(!S||!S.started)await init();
+    btn.textContent='Tạm dừng';btn.classList.remove('primary');
+    timer=setInterval(poll,4000);poll();
+  }catch(e){btn.textContent='Bắt đầu';
+    let m='Lỗi kết nối RPC: '+e.message;
+    if(/failed to fetch/i.test(e.message)) m+=' — trình xem file trong app đang chặn mạng. Tải file về, mở bằng Chrome.';
+    status(m);}
+};
+$('reset').onclick=()=>{if(timer){clearInterval(timer);timer=null;}btn.textContent='Bắt đầu';btn.classList.add('primary');reset();status('Đã reset.');};
+reset();
+
+/* Ví nóng: nhập private key -> địa chỉ + số dư (chỉ đọc). Chạy độc lập, không cần mạng ngoài. */
+let HOTKEY=null;
+document.getElementById('hotbtn').onclick=async()=>{
+  const info=document.getElementById('hotinfo');
+  try{
+    if(HOTKEY){ HOTKEY=null; document.getElementById('hotpk').value='';
+      document.getElementById('hotbtn').textContent='Nhập ví nóng'; info.textContent='Đã xóa ví khỏi bộ nhớ.'; return; }
+    const pk=document.getElementById('hotpk').value;
+    if(!pk.trim()){ info.textContent='Dán private key ví nóng vào ô.'; return; }
+    if(typeof window.__addrFromPK!=='function') throw new Error('thư viện ví chưa tải (tải lại trang)');
+    const {address}=window.__addrFromPK(pk);
+    HOTKEY=pk.trim(); document.getElementById('hotpk').value='';
+    info.textContent='Đang đọc số dư...';
+    const bal=await rpc('eth_getBalance',[address,'latest']);
+    if(!bal) throw new Error('RPC không trả số dư');
+    const bnb=parseInt(bal,16)/1e18;
+    const short=address.slice(0,6)+'...'+address.slice(-4);
+    info.innerHTML='<b>'+short+'</b> · '+bnb.toFixed(4)+' BNB <span style="color:var(--mut)">(ví nóng, chỉ đọc)</span>';
+    document.getElementById('hotbtn').textContent='Xóa ví';
+  }catch(e){
+    let m='Lỗi: '+e.message;
+    if(/failed to fetch/i.test(e.message)) m+=' — trình xem file trong app đang chặn mạng. Tải file về, mở bằng Chrome.';
+    info.textContent=m; HOTKEY=null;
+  }
+};
+
+/* ---- Hạ tầng: endpoint riêng + mempool live ---- */
+function rebuildRpcs(){
+  const hh=(document.getElementById('ep_http').value||'').trim();
+  RPCS=[];
+  if(hh)RPCS.push(hh.replace(/\/?$/,'/'));
+  RPCS.push('https://bsc.publicnode.com','https://bsc-dataseed.binance.org/','https://bsc-dataseed1.binance.org/','https://bsc-dataseed2.binance.org/','https://bsc-dataseed3.binance.org/');
+  const w=(document.getElementById('ep_ws').value||'').trim();
+  WS_URL=w||'wss://bsc.publicnode.com';
+  const hi=document.getElementById('ep_info');
+  hi.innerHTML='HTTP: '+(hh?'<b>'+hh+'</b> (riêng) → ':'')+'publicnode → bsc-dataseed (tự xoay khi lỗi). '+
+    'WS: <b>'+WS_URL+'</b>'+(w?' (riêng)':' (miễn phí, throttle)')+'.';
+}
+function loadEndpoints(){
+  try{
+    document.getElementById('ep_http').value=localStorage.getItem('ep_http')||'';
+    document.getElementById('ep_ws').value=localStorage.getItem('ep_ws')||'';
+  }catch(e){}
+  rebuildRpcs();
+}
+document.getElementById('ep_save').onclick=()=>{
+  try{localStorage.setItem('ep_http',document.getElementById('ep_http').value.trim());
+      localStorage.setItem('ep_ws',document.getElementById('ep_ws').value.trim());}catch(e){}
+  rebuildRpcs();
+};
+document.getElementById('ep_clear').onclick=()=>{
+  try{localStorage.removeItem('ep_http');localStorage.removeItem('ep_ws');}catch(e){}
+  document.getElementById('ep_http').value='';document.getElementById('ep_ws').value='';
+  rebuildRpcs();
+};
+loadEndpoints();
+
+/* Mempool live: newPendingTransactions -> thấy victim trước khi vào block */
+let mpWs=null,mpOn=false,mpSeen=new Map(),mpCount=0,mpT0=0;
+document.getElementById('mp_btn').onclick=()=>{
+  const mi=document.getElementById('mp_info');
+  if(mpOn){try{mpWs.close();}catch(e){}return;}
+  mi.textContent='Đang kết nối '+WS_URL+' ...';
+  try{mpWs=new WebSocket(WS_URL);}catch(e){mi.textContent='Lỗi WebSocket: '+e.message;return;}
+  mpWs.onopen=()=>{
+    mpWs.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_subscribe',params:['newPendingTransactions']}));
+    mpOn=true;mpCount=0;mpT0=Date.now();mpSeen.clear();
+    document.getElementById('mp_btn').textContent='Tắt mempool';
+    mi.innerHTML='Đã subscribe mempool. Đang nghe...';
+  };
+  mpWs.onmessage=ev=>{
+    try{
+      const m=JSON.parse(ev.data);
+      if(m.method==='eth_subscription'&&m.params&&m.params.result){
+        const hh=m.params.result;
+        if(!mpSeen.has(hh)){mpSeen.set(hh,Date.now());mpCount++;}
+        if(mpSeen.size>8000){mpSeen.delete(mpSeen.keys().next().value);}
+      }
+    }catch(e){}
+  };
+  mpWs.onerror=()=>{mi.textContent='Lỗi WebSocket — endpoint có thể không hỗ trợ. Thử endpoint khác.';};
+  mpWs.onclose=()=>{mpOn=false;document.getElementById('mp_btn').textContent='Bật mempool live';
+    if(!/Lỗi/.test(mi.textContent))mi.textContent='Đã ngắt mempool.';};
+};
+setInterval(()=>{
+  if(!mpOn)return;
+  const dt=(Date.now()-mpT0)/1000, rate=dt>2?(mpCount/dt):0;
+  document.getElementById('mp_info').innerHTML=
+    'Mempool live: <b>'+Math.round(rate)+'</b> tx pending/giây · đã thấy <b>'+mpCount+'</b> hash (nhớ '+mpSeen.size+'). '+
+    'Victim nào đã thấy trước trong mempool sẽ được đánh dấu ở log.';
+},2000);
+</script>
+</body>
+</html>

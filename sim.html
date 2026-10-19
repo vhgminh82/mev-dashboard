@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MEV Sandwich Paper-Trade — Realtime (BSC)</title>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--txt:#e6edf3;--mut:#8b949e;
+        --grn:#3fb950;--red:#f85149;--amb:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:16px;max-width:1100px;margin:0 auto}
+  h1{font-size:18px;margin-bottom:4px}
+  .sub{color:var(--mut);font-size:12px;margin-bottom:12px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  select,button{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}
+  button:hover{border-color:var(--acc)}
+  button.primary{background:#1f6feb;border-color:#1f6feb;color:#fff}
+  .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .card .k{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  .card .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .pos{color:var(--grn)} .neg{color:var(--red)}
+  .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px}
+  @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .panel h2{font-size:13px;margin-bottom:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  #chart{width:100%;height:220px;display:block}
+  table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+  th,td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.4px}
+  td:first-child,th:first-child{text-align:left}
+  #log{height:220px;overflow-y:auto;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  #log div{padding:3px 0;border-bottom:1px solid #21262d;color:var(--mut)}
+  #log div b{color:var(--txt);font-weight:600}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+  .stat .v{font-size:17px}
+  .note{color:var(--mut);font-size:11px;margin-top:12px}
+</style>
+</head>
+<body>
+<h1>MEV Sandwich — Paper Trade Realtime (BSC)</h1>
+<div class="sub">Mô phỏng paper-trade 1 BNB. Không phải giao dịch thật. Toán AMM + gas BSC thật, victim ngẫu nhiên.</div>
+
+<div class="controls">
+  <label>Kịch bản
+    <select id="scenario">
+      <option value="realistic" selected>realistic (private 70%, cạnh tranh 85%)</option>
+      <option value="optimistic">optimistic (private 30%, cạnh tranh 50%)</option>
+      <option value="fantasy">fantasy (không cạnh tranh)</option>
+    </select>
+  </label>
+  <label>Tốc độ
+    <select id="speed">
+      <option value="3000">1x (3s/block như BSC)</option>
+      <option value="750" selected>4x</option>
+      <option value="150">20x</option>
+    </select>
+  </label>
+  <label>Chiến lược bid gas
+    <select id="bidstrat">
+      <option value="0" selected>Gas mạng (mặc định)</option>
+      <option value="0.7">Tối đa 70% gross</option>
+      <option value="0.9">Tối đa 90% gross</option>
+      <option value="0.97">Tối đa 97% gross (tất tay)</option>
+    </select>
+  </label>
+  <button id="btn" class="primary">Bắt đầu</button>
+  <button id="reset">Reset</button>
+</div>
+
+<div class="hero">
+  <div class="card"><div class="k">Số dư paper</div><div class="v" id="bal">$10.00</div></div>
+  <div class="card"><div class="k">P&amp;L</div><div class="v" id="pnl">$0.00</div></div>
+  <div class="card"><div class="k">Block</div><div class="v" id="blk">0</div></div>
+  <div class="card"><div class="k">Win rate</div><div class="v" id="wr">—</div></div>
+</div>
+
+<div class="grid2">
+  <div class="panel"><h2>Equity curve</h2><canvas id="chart" width="640" height="220"></canvas></div>
+  <div class="panel"><h2>Live log</h2><div id="log"></div></div>
+</div>
+
+<div class="panel" style="margin-bottom:12px"><h2>Thống kê</h2>
+  <div class="stats">
+    <div class="card stat"><div class="k">Victim thấy</div><div class="v" id="sSeen">0</div></div>
+    <div class="card stat"><div class="k">Lộ mempool</div><div class="v" id="sVis">0</div></div>
+    <div class="card stat"><div class="k">Đã thử</div><div class="v" id="sAtt">0</div></div>
+    <div class="card stat"><div class="k">Thắng</div><div class="v pos" id="sWon">0</div></div>
+    <div class="card stat"><div class="k">Bị cướp</div><div class="v neg" id="sComp">0</div></div>
+    <div class="card stat"><div class="k">Bỏ (EV âm)</div><div class="v" id="sSkip">0</div></div>
+    <div class="card stat"><div class="k">Gas đã trả</div><div class="v" id="sGas">$0.00</div></div>
+  </div>
+  <div style="font-size:12px;color:var(--mut);margin-top:8px">
+    <b>Victim thấy</b>: tổng lệnh lớn sinh ra. <b>Lộ mempool</b>: số lệnh không đi private flow (phần còn lại bạn không bao giờ thấy).
+    <b>Bị cướp</b>: thua đấu giá gas — nguyên nhân và con số cụ thể ở từng lệnh bên dưới.
+    <b>Bỏ (EV âm)</b>: tính ra kỳ vọng âm sau khi trừ xác suất bị cướp và gas nên không ra tay.
+    <br>Tổng gross rơi vào tay đối thủ: <b id="sMissed" class="neg">$0.00</b> —
+    tổng gas validator ăn từ đấu giá: <b id="sValidator">$0.00</b>.
+    Đổi "Chiến lược bid gas" rồi Reset để thử: bid càng cao càng thắng nhiều nhưng lãi càng mỏng — phần chênh lệch chảy vào túi validator.
+  </div>
+</div>
+
+<div class="panel"><h2>Lệnh gần nhất</h2>
+  <table><thead><tr><th>Block</th><th>Pool</th><th>Victim</th><th>Frontrun</th><th>Net</th><th>Kết quả</th></tr></thead>
+  <tbody id="tbody"></tbody></table>
+</div>
+
+<div class="note">Tham số: gas 3 gwei, $0.76/sandwich (2 swap), $0.17/tx revert, phí pool 0.25%, vốn tối đa 90% số dư/lệnh. Đổi kịch bản hoặc Reset để chạy lại từ đầu.</div>
+
+<script>
+"use strict";
+/* ===== engine: port of mev_paper.py ===== */
+const BNB=700, GWEI=3, FEE=0.0025, START=10, MAXF=200000; // vốn paper $10, all-in 100%
+const GAS2=2*180000*GWEI*1e-9*BNB, GASR=80000*GWEI*1e-9*BNB;
+const POOLS=[{n:'big',rb:15000,ru:10500000,w:.7},{n:'mid',rb:1500,ru:1050000,w:.3}];
+const SCEN={fantasy:[0,0],optimistic:[.3,.5],realistic:[.7,.85]};
+
+let spare=null;
+function randn(){ // Box-Muller
+  if(spare!==null){const v=spare;spare=null;return v;}
+  let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();
+  const m=Math.sqrt(-2*Math.log(u));
+  spare=m*Math.sin(2*Math.PI*v);return m*Math.cos(2*Math.PI*v);
+}
+function tri(a,b,c){const u=Math.random(),fc=(c-a)/(b-a);
+  return u<fc?a+Math.sqrt(u*(b-a)*(c-a)):b-Math.sqrt((1-u)*(b-a)*(b-c));}
+function getOut(i,ri,ro){const a=i*(1-FEE);return a*ro/(ri+a);}
+function sandwich(F,V,ru,rb){
+  const b1=getOut(F,ru,rb),ru1=ru+F,rb1=rb-b1;
+  const bv=getOut(V,ru1,rb1),ru2=ru1+V,rb2=rb1-bv;
+  return [getOut(b1,rb2,ru2)-F,bv];
+}
+function maxF(V,s,ru,rb,cap){
+  const minOut=getOut(V,ru,rb)*(1-s);
+  const ok=F=>{if(F<=0)return true;
+    const b1=getOut(F,ru,rb);
+    return getOut(V,ru+F,rb-b1)>=minOut;};
+  let hi=Math.min(cap,V*5);if(hi<=0)return 0;
+  while(hi>1&&!ok(hi))hi/=2;
+  if(!ok(hi))return 0;
+  let lo=0;
+  for(let i=0;i<50;i++){const m=(lo+hi)/2;if(ok(m))lo=m;else hi=m;}
+  return lo;
+}
+function genVictim(){
+  const r=Math.random();let acc=0,p=POOLS[0];
+  for(const q of POOLS){acc+=q.w;if(r<acc){p=q;break;}}
+  const V=Math.min(500000,Math.max(300,Math.exp(Math.log(8000)+1.3*randn())));
+  return [p,V,tri(0.001,0.02,0.005)];
+}
+
+/* ===== state ===== */
+let S;
+function reset(){
+  const [pp,pc]=SCEN[document.getElementById('scenario').value];
+  S={bal:START,blk:0,pp,pc,seen:0,vis:0,att:0,won:0,comp:0,skip:0,gas:0,missed:0,validator:0,
+     eq:[{b:0,bal:START}],trades:[]};
+  document.getElementById('tbody').innerHTML='';
+  document.getElementById('log').innerHTML='';
+  log('Sẵn sàng. Vốn paper: <b>$'+START.toFixed(2)+'</b>, all-in mỗi lệnh.');
+  draw();
+}
+function fmt(n,d=2){return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
+
+function pickCause(){
+  const r=Math.random();
+  if(r<0.60)return 'bot khác bid gas cao hơn, tx bạn xếp sau → revert';
+  if(r<0.85)return 'bot khác đi private flow qua builder quen';
+  return 'tx bạn tới chậm hơn (latency)';
+}
+function tick(){
+  S.blk++;
+  const r=Math.random(),n=r<0.05?2:(r<0.35?1:0);
+  for(let i=0;i<n;i++){
+    S.seen++;
+    const [p,V,s]=genVictim();
+    if(Math.random()<S.pp)continue;               // private flow: invisible
+    S.vis++;
+    const cap=Math.min(S.bal,MAXF); // all-in 100% số dư
+    const F=maxF(V,s,p.ru,p.rb,cap);
+    if(F<1)continue;
+    const [gross]=sandwich(F,V,p.ru,p.rb);
+    const strat=parseFloat(document.getElementById('bidstrat').value);
+    let wP=0,wNet=0; // xác suất thắng & lãi kỳ vọng khi đấu giá, theo chiến lược
+    if(strat>=0.97){wP=1;wNet=gross*0.05;}
+    else if(strat>0.9){wP=(strat-0.9)/0.05;wNet=gross*0.05;}
+    const ev=(1-S.pc)*(gross-GAS2)+S.pc*(wP*wNet+(1-wP)*(-GASR));
+    if(ev<=0){S.skip++;continue;}
+    S.att++;
+    if(Math.random()<S.pc){
+      // đấu giá gas leo thang với đối thủ
+      const compMax=gross*(0.90+Math.random()*0.05);
+      const yourMax=gross*strat;
+      let compBid=gross*(0.5+Math.random()*0.2), yourBid=0, win=false, rounds=0;
+      if(strat>0){
+        while(rounds<20){
+          rounds++;
+          yourBid=Math.min(yourMax,compBid*1.02);
+          if(yourBid>=compMax){win=true;break;}
+          compBid=Math.min(compMax,yourBid*1.02);
+          if(compBid>=yourMax){win=false;break;}
+        }
+      }
+      if(win){
+        const net=gross-yourBid;
+        S.bal+=net;S.won++;S.gas+=yourBid;S.validator=(S.validator||0)+yourBid;
+        const msg='Thắng đấu giá sau '+rounds+' vòng. Bạn trả gas <b>$'+yourBid.toFixed(2)+'</b> → lãi còn <b class="'+(net>=0?'pos':'neg')+'">$'+net.toFixed(2)+'</b> (đối thủ chịu tới $'+compMax.toFixed(2)+'). Validator ăn $'+yourBid.toFixed(2)+'.';
+        pushTrade({b:S.blk,pool:p.n,V,F,net,out:'Thắng (bid cao)',why:msg});
+        log('Block <b>'+S.blk+'</b>: victim $'+fmt(V,0)+' → '+msg);
+      }else{
+        const cause=strat===0?pickCause():'đối thủ chịu chi tới $'+compMax.toFixed(2)+' ('+Math.round(compMax/gross*100)+'% gross), bạn chỉ tới '+Math.round(strat*100)+'%';
+        S.bal-=GASR;S.comp++;S.gas+=GASR;S.missed=(S.missed||0)+gross;
+        const auc='Đối thủ thắng ở $'+compBid.toFixed(2)+'.';
+        pushTrade({b:S.blk,pool:p.n,V,F,net:-GASR,out:'Bị cướp',why:cause+'<br>'+auc});
+        log('Block <b>'+S.blk+'</b>: victim $'+fmt(V,0)+' → <b class="neg">bị cướp</b>: '+cause+'. '+auc+' Mất gas $'+GASR.toFixed(2)+'.');
+      }
+    }else{
+      const net=gross-GAS2;
+      S.bal+=net;S.won++;S.gas+=GAS2;
+      pushTrade({b:S.blk,pool:p.n,V,F,net,out:'Thắng'});
+      log('Block <b>'+S.blk+'</b>: sandwich $'+fmt(F,0)+' trước victim $'+fmt(V,0)+
+          ' → <b class="pos">+$'+net.toFixed(2)+'</b>');
+    }
+  }
+  S.eq.push({b:S.blk,bal:S.bal});
+  if(S.eq.length>4000)S.eq=S.eq.filter((_,i)=>i%2===0);
+  draw();
+}
+function pushTrade(t){
+  S.trades.unshift(t);if(S.trades.length>15)S.trades.pop();
+  const tb=document.getElementById('tbody');
+  tb.innerHTML=S.trades.map(t=>
+    '<tr><td>'+t.b+'</td><td>'+t.pool+'</td><td>$'+fmt(t.V,0)+'</td><td>$'+fmt(t.F,0)+
+    '</td><td class="'+(t.net>=0?'pos':'neg')+'">'+(t.net>=0?'+':'')+'$'+t.net.toFixed(2)+
+    '</td><td>'+t.out+(t.why?'<br><span style="color:var(--mut);font-size:11px">'+t.why+'</span>':'')+'</td></tr>').join('');
+}
+function log(h){
+  const el=document.getElementById('log'),d=document.createElement('div');
+  d.innerHTML=h;el.prepend(d);
+  while(el.children.length>30)el.lastChild.remove();
+}
+function draw(){
+  document.getElementById('bal').textContent='$'+fmt(S.bal);
+  const pnl=S.bal-START,pe=document.getElementById('pnl');
+  pe.textContent=(pnl>=0?'+':'')+'$'+fmt(pnl);
+  pe.className='v '+(pnl>=0?'pos':'neg');
+  document.getElementById('blk').textContent=S.blk.toLocaleString();
+  document.getElementById('wr').textContent=S.att?Math.round(100*S.won/S.att)+'%':'—';
+  const m={seen:S.seen,vis:S.vis,att:S.att,won:S.won,comp:S.comp,skip:S.skip};
+  for(const k in m)document.getElementById('s'+k[0].toUpperCase()+k.slice(1)).textContent=m[k];
+  document.getElementById('sGas').textContent='$'+fmt(S.gas);
+  document.getElementById('sMissed').textContent='$'+fmt(S.missed||0);
+  const sv=document.getElementById('sValidator');
+  if(sv)sv.textContent='$'+fmt(S.validator||0);
+  // chart
+  const c=document.getElementById('chart'),x=c.getContext('2d'),W=c.width,H=c.height;
+  x.clearRect(0,0,W,H);
+  const pts=S.eq;if(pts.length<2)return;
+  let mn=Math.min(...pts.map(p=>p.bal)),mx=Math.max(...pts.map(p=>p.bal));
+  if(mx-mn<1){mn-=1;mx+=1;}
+  const X=i=>i/(pts.length-1)*(W-8)+4, Y=v=>H-8-(v-mn)/(mx-mn)*(H-30);
+  x.strokeStyle='#30363d';x.lineWidth=1;
+  x.beginPath();x.moveTo(0,Y(START));x.lineTo(W,Y(START));x.stroke();
+  x.strokeStyle=S.bal>=START?'#3fb950':'#f85149';x.lineWidth=2;x.beginPath();
+  pts.forEach((p,i)=>i?x.lineTo(X(i),Y(p.bal)):x.moveTo(X(i),Y(p.bal)));
+  x.stroke();
+  x.fillStyle='#8b949e';x.font='10px sans-serif';
+  x.fillText('$'+fmt(mx,0),6,12);x.fillText('$'+fmt(mn,0),6,H-6);
+}
+
+/* ===== controls ===== */
+let timer=null;
+const btn=document.getElementById('btn');
+function setTimer(){
+  clearInterval(timer);
+  if(btn.dataset.on==='1')timer=setInterval(tick,+document.getElementById('speed').value);
+}
+btn.onclick=()=>{
+  const on=btn.dataset.on==='1';
+  btn.dataset.on=on?'0':'1';
+  btn.textContent=on?'Bắt đầu':'Tạm dừng';
+  btn.classList.toggle('primary',!on);
+  setTimer();
+  if(!on)log('Chạy realtime...');
+};
+document.getElementById('reset').onclick=()=>{btn.dataset.on='0';btn.textContent='Bắt đầu';btn.classList.add('primary');clearInterval(timer);reset();};
+document.getElementById('scenario').onchange=()=>{document.getElementById('reset').click();};
+document.getElementById('speed').onchange=setTimer;
+reset();
+</script>
+</body>
+</html>
