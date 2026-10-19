@@ -138,7 +138,8 @@
 "use strict";
 window.addEventListener('error',e=>{try{
   const mi=document.getElementById('mp_info');
-  if(mi)mi.innerHTML='<b style="color:#f66">Lỗi JS: '+(e.message||e.error)+'</b>';
+  const st=(e.error&&e.error.stack?String(e.error.stack).split('\n').slice(0,3).join(' | '):'');
+  if(mi)mi.innerHTML='<b style="color:#f66">Lỗi JS: '+(e.message||e.error)+'</b><br><span style="font-size:11px;color:var(--mut)">'+st+'</span>';
 }catch(_){}});
 /* ===== constants (verified on-chain 2026-10-19) ===== */
 let RPCS=['https://bsc.publicnode.com','https://bsc-dataseed.binance.org/','https://bsc-dataseed1.binance.org/','https://bsc-dataseed2.binance.org/','https://bsc-dataseed3.binance.org/'];
