@@ -260,7 +260,7 @@ function reset(){
   S={bal:0,blk:0,last:0,price:0,scan:0,vic:0,opp:0,won:0,comp:0,gas:0,
      eq:[],rows:[],started:false};
   $('tbody').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--mut)">Bấm Bắt đầu để quét block BSC trực tiếp.</td></tr>';
-  $('log').innerHTML='';draw();
+  draw();
 }
 async function init(){
   status('Đang lấy giá BNB và block hiện tại...');
