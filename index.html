@@ -58,7 +58,7 @@
 </head>
 <body>
 <h1>MEV Sandwich — Paper Trade <span class="live">LIVE BSC</span></h1>
-<div class="warn"><b>Dữ liệu thật, trade mô phỏng.</b> Victim là lệnh swap USDT/WBNB thật trên PancakeSwap V2, đọc từ block BSC vừa xác nhận. Đây là <b>cơ hội lý thuyết</b>: ngoài đời bạn phải thấy lệnh trong mempool <i>trước</i> khi nó vào block và thắng bot khác — cả hai đều không có ở đây. Bật "trừ hao cạnh tranh" để gần thực tế hơn.</div>
+<div class="warn"><b>Dữ liệu thật, trade mô phỏng.</b> Victim là lệnh swap thật trên PancakeSwap V2 (mọi cặp có USDT/WBNB một bên), đọc từ block BSC vừa xác nhận. Đây là <b>cơ hội lý thuyết</b>: ngoài đời bạn phải thấy lệnh trong mempool <i>trước</i> khi nó vào block và thắng bot khác — cả hai đều không có ở đây. Bật "trừ hao cạnh tranh" để gần thực tế hơn.</div>
 
 <div class="controls">
   <button id="btn" class="primary">Bắt đầu</button>
@@ -131,10 +131,14 @@
   <tbody id="tbody"><tr><td colspan="7" style="text-align:center;color:var(--mut)">Bấm Bắt đầu để quét block BSC trực tiếp.</td></tr></tbody></table>
 </div>
 
-<div class="note">Nguồn: public RPC BSC (4 endpoint dự phòng). Quét block mới mỗi 4 giây. Bảng swap hiển thị mọi lệnh decode được (token lạ hiện địa chỉ rút gọn, số lượng giả định 18 decimals). Chỉ swap trực tiếp USDT↔WBNB qua PancakeSwap V2 mới được đánh giá sandwich (cặp sâu nhất, reserve đọc thật từng block). Giả định bot đủ inventory 2 chiều, vốn tối đa 90% số dư/lệnh. Không phải lời khuyên đầu tư.</div>
+<div class="note">Nguồn: public RPC BSC (4 endpoint dự phòng). Quét block mới mỗi 4 giây. Mọi cặp có USDT/WBNB một bên đều được đánh giá sandwich (pair tìm qua factory, decimals + reserve đọc thật từng block). Giả định bot đủ inventory 2 chiều, vốn tối đa 90% số dư/lệnh. Không phải lời khuyên đầu tư.</div>
 
 <script>
 "use strict";
+window.addEventListener('error',e=>{try{
+  const mi=document.getElementById('mp_info');
+  if(mi)mi.innerHTML='<b style="color:#f66">Lỗi JS: '+(e.message||e.error)+'</b>';
+}catch(_){}});
 /* ===== constants (verified on-chain 2026-10-19) ===== */
 let RPCS=['https://bsc.publicnode.com','https://bsc-dataseed.binance.org/','https://bsc-dataseed1.binance.org/','https://bsc-dataseed2.binance.org/','https://bsc-dataseed3.binance.org/'];
 let WS_URL='wss://bsc.publicnode.com';
