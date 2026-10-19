@@ -32,7 +32,9 @@
   button{cursor:pointer} button:hover{border-color:var(--acc)}
   button.primary{background:#1f6feb;border-color:#1f6feb;color:#fff}
   label.chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut)}
-  .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
+  .herocol{display:grid;grid-template-rows:repeat(4,1fr);gap:8px}
+  .herocol .card{display:flex;align-items:center;justify-content:space-between;padding:8px 14px}
+  .herocol .card .v{font-size:20px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
   .card .k{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
   .card .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
@@ -104,15 +106,14 @@
 <div style="font-size:12px;color:var(--mut);margin:-6px 0 12px">Ví nóng: key chỉ nằm trong <b>bộ nhớ trang</b> (tắt tab là mất), không lưu localStorage, không gửi đi đâu. App <b>không tự ký lệnh thật</b> — victim ở đây trễ 1 block nên không có gì đáng để ký.</div>
 
 
-<div class="hero">
-  <div class="card"><div class="k">Số dư paper</div><div class="v" id="bal">—</div></div>
-  <div class="card"><div class="k">P&amp;L</div><div class="v" id="pnl">—</div></div>
-  <div class="card"><div class="k">Block BSC</div><div class="v" id="blk">—</div></div>
-  <div class="card"><div class="k">BNB / Gas</div><div class="v" id="px" style="font-size:16px">—</div></div>
-</div>
-
 <div class="grid2">
   <div class="panel"><h2>Equity curve</h2><canvas id="chart" width="640" height="220"></canvas></div>
+  <div class="herocol">
+    <div class="card"><div class="k">Số dư paper</div><div class="v" id="bal">—</div></div>
+    <div class="card"><div class="k">P&amp;L</div><div class="v" id="pnl">—</div></div>
+    <div class="card"><div class="k">Block BSC</div><div class="v" id="blk">—</div></div>
+    <div class="card"><div class="k">BNB / Gas</div><div class="v" id="px" style="font-size:16px">—</div></div>
+  </div>
 </div>
 
 <div class="panel" style="margin-bottom:12px"><h2>Thống kê</h2>
