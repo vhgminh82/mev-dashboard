@@ -84,7 +84,7 @@
     <span id="hotinfo" style="font-size:12px;color:var(--mut)"></span>
   </span>
 </div>
-<div class="panel" style="margin-bottom:12px"><h2>Hạ tầng RPC / Mempool</h2>
+<div class="panel" style="margin-bottom:12px"><h2>Hạ tầng RPC / Mempool <span id="ver" style="font-size:11px;color:var(--mut);font-weight:normal"></span></h2>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
     <input id="ep_http" placeholder="HTTP RPC riêng (Chainstack / QuickNode free)..." style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;width:280px">
     <input id="ep_ws" placeholder="WS mempool riêng (wss://...)" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;width:220px">
@@ -246,6 +246,7 @@ function maxF(Vin,s,rIn,rOut,cap){
 /* ===== state ===== */
 let S=null,busy=false,timer=null,gasGwei=0.05,gasTs=0;
 const $=id=>document.getElementById(id);
+const VER='2c0fac4+mempool';
 const fmt=(n,d=2)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 function status(t){$('status').textContent=t;}
 function log(h){}
@@ -507,6 +508,7 @@ document.getElementById('ep_clear').onclick=()=>{
   rebuildRpcs();
 };
 loadEndpoints();
+try{$('ver').textContent='· bản '+VER;}catch(e){}
 
 /* Mempool live: newPendingTransactions -> thấy victim trước khi vào block */
 let mpWs=null,mpOn=false,mpSeen=new Map(),mpCount=0,mpT0=0;
@@ -514,7 +516,8 @@ function mpStart(){
   const mi=document.getElementById('mp_info');
   if(mpOn){try{mpWs.close();}catch(e){}return;}
   mi.textContent='Đang kết nối '+WS_URL+' ...';
-  try{mpWs=new WebSocket(WS_URL);}catch(e){mi.textContent='Lỗi WebSocket: '+e.message;return;}
+  $('mp_btn').textContent='Đang bật...';
+  try{mpWs=new WebSocket(WS_URL);}catch(e){mi.textContent='Lỗi WebSocket: '+e.message;$('mp_btn').textContent='Bật mempool live';return;}
   mpWs.onopen=()=>{
     mpWs.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_subscribe',params:['newPendingTransactions',true]}));
     mpOn=true;mpCount=0;mpT0=Date.now();mpSeen.clear();
