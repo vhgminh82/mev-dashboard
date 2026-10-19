@@ -81,6 +81,11 @@
 </div>
 <div class="controls" style="margin-top:-4px">
   <span style="display:inline-flex;gap:8px;align-items:center">
+    <select id="wmode" title="Chế độ ví" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px">
+      <option value="paper">Paper</option>
+      <option value="testnet">Testnet</option>
+      <option value="live">Live</option>
+    </select>
     <input id="hotpk" type="password" placeholder="Dán private key ví nóng" title="Chỉ nằm trong bộ nhớ trang, không lưu" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px;width:220px">
     <button id="hotbtn">Nhập ví nóng</button>
     <span id="hotinfo" style="font-size:12px;color:var(--mut)"></span>
@@ -458,29 +463,49 @@ btn.onclick=async()=>{
 $('reset').onclick=()=>{if(timer){clearInterval(timer);timer=null;}btn.textContent='Bắt đầu';btn.classList.add('primary');reset();status('Đã reset.');};
 reset();
 
-/* Ví nóng: nhập private key -> địa chỉ + số dư (chỉ đọc). Chạy độc lập, không cần mạng ngoài. */
-let HOTKEY=null;
+/* Ví nóng 3 chế độ: Paper (không cần ví) / Testnet (tBNB chain 97) / Live (BNB mainnet, chỉ đọc). */
+let HOTKEY=null, HOTADDR=null, WMODE='paper';
+const TRPC='https://bsc-testnet.publicnode.com';
+async function tRpc(m,p){
+  const r=await fetch(TRPC,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',id:1,method:m,params:p})});
+  const j=await r.json(); if(j.error)throw new Error(j.error.message); return j.result;
+}
+async function refreshHotBal(){
+  const info=document.getElementById('hotinfo');
+  if(WMODE==='paper'){info.textContent=HOTKEY?'Đã lưu ví (chế độ paper không dùng).':'Chế độ paper — không cần ví.';return;}
+  if(!HOTKEY){info.textContent='Dán private key ví nóng vào ô.';return;}
+  info.textContent='Đang đọc số dư...';
+  try{
+    const bal=WMODE==='testnet'?await tRpc('eth_getBalance',[HOTADDR,'latest']):await rpc('eth_getBalance',[HOTADDR,'latest']);
+    if(!bal)throw new Error('RPC không trả số dư');
+    const v=(parseInt(bal,16)/1e18).toFixed(4);
+    const unit=WMODE==='testnet'?'tBNB (testnet)':'BNB (mainnet, chỉ đọc)';
+    const short=HOTADDR.slice(0,6)+'...'+HOTADDR.slice(-4);
+    info.innerHTML='<b>'+short+'</b> · '+v+' '+unit;
+  }catch(e){
+    let m='Lỗi đọc số dư: '+e.message;
+    if(/failed to fetch/i.test(e.message)) m+=' — mở bằng Chrome thật, không xem trong app.';
+    info.textContent=m;
+  }
+}
+document.getElementById('wmode').onchange=e=>{WMODE=e.target.value;refreshHotBal();};
 document.getElementById('hotbtn').onclick=async()=>{
   const info=document.getElementById('hotinfo');
   try{
-    if(HOTKEY){ HOTKEY=null; document.getElementById('hotpk').value='';
-      document.getElementById('hotbtn').textContent='Nhập ví nóng'; info.textContent='Đã xóa ví khỏi bộ nhớ.'; return; }
+    if(HOTKEY){ HOTKEY=null; HOTADDR=null; document.getElementById('hotpk').value='';
+      document.getElementById('hotbtn').textContent='Nhập ví nóng'; refreshHotBal(); return; }
     const pk=document.getElementById('hotpk').value;
     if(!pk.trim()){ info.textContent='Dán private key ví nóng vào ô.'; return; }
     if(typeof window.__addrFromPK!=='function') throw new Error('thư viện ví chưa tải (tải lại trang)');
     const {address}=window.__addrFromPK(pk);
-    HOTKEY=pk.trim(); document.getElementById('hotpk').value='';
-    info.textContent='Đang đọc số dư...';
-    const bal=await rpc('eth_getBalance',[address,'latest']);
-    if(!bal) throw new Error('RPC không trả số dư');
-    const bnb=parseInt(bal,16)/1e18;
-    const short=address.slice(0,6)+'...'+address.slice(-4);
-    info.innerHTML='<b>'+short+'</b> · '+bnb.toFixed(4)+' BNB <span style="color:var(--mut)">(ví nóng, chỉ đọc)</span>';
+    HOTKEY=pk.trim(); HOTADDR=address; document.getElementById('hotpk').value='';
     document.getElementById('hotbtn').textContent='Xóa ví';
+    refreshHotBal();
   }catch(e){
     let m='Lỗi: '+e.message;
     if(/failed to fetch/i.test(e.message)) m+=' — trình xem file trong app đang chặn mạng. Tải file về, mở bằng Chrome.';
-    info.textContent=m; HOTKEY=null;
+    info.textContent=m; HOTKEY=null; HOTADDR=null;
   }
 };
 
